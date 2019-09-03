@@ -118,7 +118,32 @@ controller.on('dialog_submission', (bot, message) => {
     }
     
     axios.post(WEBHOOK_URL, {
-            text: message.submission.textarea
+            // text: message.submission.textarea,
+            attachments:[
+                {
+                    "fallback": "Required plain-text summary of the attachment.",
+                    "color": "#2eb886",
+                    // "pretext": "Optional text that appears above the attachment block",
+                    "author_name": "GitHub URL",
+                    "fields": [
+                        {
+                        "title": "Lesson Number",
+                        "value": message.submission.num,
+                        "short": true,
+                        }
+                    ],
+                    "author_link": "https://" + message.submission.url,
+                    "author_icon": "http://flickr.com/icons/bobby.jpg",
+                    "title": message.submission.textarea,
+                    // "title_link": "https://api.slack.com/",
+                    "text": message.submission.url,
+                    // "image_url": "http://my-website.com/path/to/image.jpg",
+                    // "thumb_url": "http://example.com/path/to/thumb.png",
+                    "footer": "made with <3 by misterfoxy",
+                    "footer_icon": "https://platform.slack-edge.com/img/default_application_icon.png",
+                    "ts": 123456789
+                }
+            ]
         })
         .then(data => {
             bot.reply(message, 'ok!')
