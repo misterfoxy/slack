@@ -66,34 +66,31 @@ controller.on('slash_command', (bot, message) => {
        bot.replyWithDialog(message, dialog.asObject());
 })
 
-// controller.hears('webhook', 'direct_message', (bot, message) => {
-//     bot.sendWebhook({
-//       text: message.text
-//     },function(err,res) {
-//       if (err) {
-//         console.log('web err', err)
-//       }
-//     });
-//   });
 
 controller.on('dialog_submission', (bot, message) => {
     bot.replyAcknowledge()
 
-    axios.post('https://hooks.slack.com/services/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', {
-        text: message.submission.textarea
-    })
-    .then(data => {
-        bot.reply(message, 'ok!')
-    })
-    .catch(err => {
-        console.error(err)
-    })
-
+    let WEBHOOK_URL;
+// use selectfield to choose webhook for specific channel
+    switch(message.submission.select){
+        case 'splurty':
+            WEBHOOK_URL = 'https://hooks.slack.com/services/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'
+            break;
+        case 'nomster':
+            WEBHOOK_URL = 'https://hooks.slack.com/services/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'
+            break;
+        default:
+            WEBHOOK_URL='https://hooks.slack.com/services/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'
+    }
     
-
+    axios.post(WEBHOOK_URL, {
+            text: message.submission.textarea
+        })
+        .then(data => {
+            bot.reply(message, 'ok!')
+        })
+        .catch(err => {
+            console.error(err)
+        })
+           
 })
-
-
-// GOOD URLS
-// incoming webhook https://hooks.slack.com/services/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
-// interactive request: https://48295d36.ngrok.io/slack/receive
