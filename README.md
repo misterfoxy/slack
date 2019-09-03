@@ -13,6 +13,9 @@
 
 ## Installation and Configuration
 Create a new Slackbot for a workspace you own
+
 Capture all environment variables from the settings
+
 Serve your app through ngrok for dev callback URIs
+
 
