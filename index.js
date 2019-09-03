@@ -66,21 +66,54 @@ controller.on('slash_command', (bot, message) => {
        bot.replyWithDialog(message, dialog.asObject());
 })
 
+// validation middleware
+controller.middleware.receive.use(function validateDialog(bot, message, next) {
+
+
+    if (message.type=='dialog_submission') {
+  
+      if (message.submission.url == null) {
+         bot.dialogError({
+            "name":"url",
+            "error":"You must include a valid github URL"
+            });            
+        return;
+      }
+      else if(message.submission.select == null) {
+        bot.dialogError({
+           "name":"select",
+           "error":"You must tell us the project you're working on"
+           });            
+       return;
+     }
+     else if(message.submission.textarea == null) {
+        bot.dialogError({
+           "name":"select",
+           "error":"You provide a description"
+           });            
+       return;
+     }
+    }
+  
+    next();
+  
+  });
 
 controller.on('dialog_submission', (bot, message) => {
     bot.replyAcknowledge()
 
     let WEBHOOK_URL;
-// use selectfield to choose webhook for specific channel
+
+    // use selectfield to choose webhook for specific channel
     switch(message.submission.select){
         case 'splurty':
-            WEBHOOK_URL = 'https://hooks.slack.com/services/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'
+            WEBHOOK_URL = process.env.SPLURTY_WEBHOOK
             break;
         case 'nomster':
-            WEBHOOK_URL = 'https://hooks.slack.com/services/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'
+            WEBHOOK_URL = process.env.NOMSTER_WEBHOOK
             break;
         default:
-            WEBHOOK_URL='https://hooks.slack.com/services/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'
+            WEBHOOK_URL=process.env.DEFAULT_WEBHOOK
     }
     
     axios.post(WEBHOOK_URL, {
