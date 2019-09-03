@@ -1,4 +1,5 @@
 const Botkit = require('botkit')
+const axios = require('axios');
 require('dotenv').config()
 
 if (!process.env.CLIENT_ID || !process.env.CLIENT_SECRET || !process.env.PORT || !process.env.VERIFICATION_TOKEN) {
@@ -20,11 +21,11 @@ controller.configureSlackApp({
     clientId: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
     clientSigningSecret: process.env.CLIENT_SIGNING_SECRET,
-    scopes: ['commands', 'bot'],
+    scopes: ['admin','commands', 'bot'],
 })
 
 // instantiate bot user
-const bot = controller.spawn({
+var bot = controller.spawn({
     token: process.env.BOT_TOKEN,
     incoming_webhook: {
       url: 'https://hooks.slack.com/services/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'
@@ -50,33 +51,49 @@ controller.hears('hi', 'direct_message', (bot, message) => {
     bot.reply(message, 'Hello.')
 })
 
+// create slash_command for opening dialog
 controller.on('slash_command', (bot, message) => {
+    // prevent timeout
     bot.replyAcknowledge()
-    // switch(message.command){
-    //     case "/tutorbot":
-    //         bot.reply(message, 'heard ya!')
-    //         break;
-    //     default:
-    //         bot.reply(message, 'Did not recognize that')
-    // }
     var dialog = bot.createDialog(
         'Create new Issue',
         'issue',
         'Submit'
-      ).addText('Text','text','some text')
-       .addSelect('Select','select',null,[{label:'Foo',value:'foo'},{label:'Bar',value:'bar'}],{placeholder: 'Select One'})
-       .addTextarea('Textarea','textarea','some longer text',{placeholder: 'Put words here'})
+      ).addSelect('What section are you working on?','select',null,[{label:'splurty',value:'splurty'},{label:'nomster',value:'nomster'},{label:'flixter',value:'flixter'},{label:'tdd',value:'tdd'},{label:'spa',value:'spa'}],{placeholder: 'Select One'})
+       .addTextarea('Issue Description','textarea')
        .addUrl('Github URL','url');
     
        bot.replyWithDialog(message, dialog.asObject());
 })
 
-controller.hears('webhook', 'direct_message', (bot, message) => {
-    bot.sendWebhook({
-      text: message.text
-    },function(err,res) {
-      if (err) {
-        console.log('web err', err)
-      }
-    });
-  });
+// controller.hears('webhook', 'direct_message', (bot, message) => {
+//     bot.sendWebhook({
+//       text: message.text
+//     },function(err,res) {
+//       if (err) {
+//         console.log('web err', err)
+//       }
+//     });
+//   });
+
+controller.on('dialog_submission', (bot, message) => {
+    bot.replyAcknowledge()
+
+    axios.post('https://hooks.slack.com/services/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', {
+        text: message.submission.textarea
+    })
+    .then(data => {
+        bot.reply(message, 'ok!')
+    })
+    .catch(err => {
+        console.error(err)
+    })
+
+    
+
+})
+
+
+// GOOD URLS
+// incoming webhook https://hooks.slack.com/services/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
+// interactive request: https://48295d36.ngrok.io/slack/receive
