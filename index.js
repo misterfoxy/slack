@@ -60,6 +60,7 @@ controller.on('slash_command', (bot, message) => {
         'issue',
         'Submit'
       ).addSelect('What section are you working on?','select',null,[{label:'splurty',value:'splurty'},{label:'nomster',value:'nomster'},{label:'flixter',value:'flixter'},{label:'tdd',value:'tdd'},{label:'spa',value:'spa'}],{placeholder: 'Select One'})
+       .addText('What lesson number are you on?', 'num')
        .addTextarea('Issue Description','textarea')
        .addUrl('Github URL','url');
     

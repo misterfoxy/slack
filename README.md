@@ -4,7 +4,7 @@
 -  User types slash command, can pass arguments if poweruser
 -  Slash command opens dialog for user
 -  user fills out following data points:
-    - lesson category (dropdown?)
+    - lesson category 
     - lesson number
     -  github url
     - issue description
