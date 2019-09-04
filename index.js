@@ -23,7 +23,7 @@ controller.configureSlackApp({
     clientId: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
     clientSigningSecret: process.env.CLIENT_SIGNING_SECRET,
-    scopes: ['admin','commands', 'bot','channels:history', 'channels:read','emoji:read', 'users.profile:read'],
+    scopes: ['admin','commands', 'bot','channels:history', 'channels:read','emoji:read', 'users.profile:read', 'chat:write:user'],
 })
 
 // instantiate bot user
@@ -102,9 +102,6 @@ controller.middleware.receive.use(function validateDialog(bot, message, next) {
   
   });
 
-
-
-
     /* 
 
         TUTOR BOT!!!
@@ -117,122 +114,100 @@ controller.middleware.receive.use(function validateDialog(bot, message, next) {
 controller.on('dialog_submission', (bot, message) => {
     bot.replyAcknowledge()
 
-    // let WEBHOOK_URL;
+    let CHANNEL_ID;
 
-    // // use selectfield to choose webhook for specific channel
-    // switch(message.submission.select){
-    //     case 'splurty':
-    //         WEBHOOK_URL = process.env.SPLURTY_WEBHOOK
-    //         break;
-    //     case 'nomster':
-    //         WEBHOOK_URL = process.env.NOMSTER_WEBHOOK
-    //         break;
-    //     default:
-    //         WEBHOOK_URL=process.env.DEFAULT_WEBHOOK
-    // }
+    // use selectfield to choose webhook for specific channel
+    switch(message.submission.select){
+        case 'splurty':
+            CHANNEL_ID = process.env.SPLURTY_ID
+            break;
+        case 'nomster':
+            CHANNEL_ID = process.env.NOMSTER_ID
+            break;
+        default:
+            CHANNEL_ID=process.env.DEV_TEMP_CHANNEL_ID
+    }
 
 
-    // post issue in dev temp channel
-    axios.post(process.env.DEFAULT_WEBHOOK, {
-            text: message.submission.textarea,
-            attachments:[
-                {
-                    "fallback": "Required plain-text summary of the attachment.",
-                    "color": "#2eb886",
-                    // "pretext": "Optional text that appears above the attachment block",
-                    "author_name": "GitHub URL",
-                    "fields": [
-                        {
-                        "title": "Lesson Number",
-                        "value": message.submission.num,
-                        "short": true,
-                        }
-                    ],
-                    "author_link": "https://" + message.submission.url,
-                    "author_icon": "http://flickr.com/icons/bobby.jpg",
-                    "title": message.submission.textarea,
-                    // "title_link": "https://api.slack.com/",
-                    "text": message.submission.url,
-                    // "image_url": "http://my-website.com/path/to/image.jpg",
-                    // "thumb_url": "http://example.com/path/to/thumb.png",
-                    "footer": "made with <3 by misterfoxy",
-                    "footer_icon": "https://platform.slack-edge.com/img/default_application_icon.png",
-                    "ts": Date.UTC()
-                }
-            ]
-        })
+    axios.post(`https://slack.com/api/chat.postMessage?token=${process.env.BOT_TOKEN}&channel=${CHANNEL_ID}&text=${message.submission.textarea}`,{
+       
+        // attachments:[
+        //     {
+        //         "fallback": "Required plain-text summary of the attachment.",
+        //         "color": "#2eb886",
+        //         // "pretext": "Optional text that appears above the attachment block",
+        //         "author_name": "GitHub URL",
+        //         "fields": [
+        //             {
+        //             "title": "Lesson Number",
+        //             "value": message.submission.num,
+        //             "short": true,
+        //             }
+        //         ],
+        //         "author_link": "https://" + message.submission.url,
+        //         "author_icon": "http://flickr.com/icons/bobby.jpg",
+        //         "title": message.submission.textarea,
+        //         // "title_link": "https://api.slack.com/",
+        //         "text": message.submission.url,
+        //         // "image_url": "http://my-website.com/path/to/image.jpg",
+        //         // "thumb_url": "http://example.com/path/to/thumb.png",
+        //         "footer": "made with <3 by misterfoxy",
+        //         "footer_icon": "https://platform.slack-edge.com/img/default_application_icon.png",
+        //         "ts": Date.UTC()
+        //     }
+        // ]
+    })
+    .then(data => {
+        const message_id = data.data.ts
+        const channel = data.data.channel
+
+        // grab permalink of the post
+        axios.get(`https://slack.com/api/chat.getPermalink?token=${process.env.OAUTH_ACCESS_TOKEN}&channel=${channel}&message_ts=${message_id}`)
         .then(data => {
-            /* 
-            
-            after posting data to dev temp channel
-            we want to retrieve the most recent post in the dev temp channel
-        
 
-            */
-        
-            axios.get(`https://slack.com/api/conversations.history?token=${process.env.OAUTH_ACCESS_TOKEN}&channel=${process.env.DEV_TEMP_CHANNEL_ID}`)
-            .then(data => {
-                           /* 
-            
-                            use ts of top result to retrieve specific message
-
-                           */
-            
-                const message_id = data.data.messages[0].ts
-                axios.get(`https://slack.com/api/chat.getPermalink?token=${process.env.OAUTH_ACCESS_TOKEN}&channel=${process.env.DEV_TEMP_CHANNEL_ID}&message_ts=${message_id}`)
-                .then(data => {
-                    // post to TA queue with permalink
-                        axios.post(process.env.TA_QUEUE_WEBHOOK, {
-                            blocks:[
+            // post to TA queue with permalink
+                axios.post(process.env.TA_QUEUE_WEBHOOK, {
+                    blocks:[
+                        {
+                            "type": "section",
+                            "text": {
+                                "text": data.data.permalink,
+                                "type": "mrkdwn"
+                            }
+                        },
+                        {
+                            "type": "actions",
+                            "elements": [
+                                
                                 {
-                                    "type": "section",
+                                    "type": "button",
                                     "text": {
-                                        "text": data.data.permalink,
-                                        "type": "mrkdwn"
-                                    }
-                                },
-                                {
-                                    "type": "actions",
-                                    "elements": [
-                                        
-                                        {
-                                            "type": "button",
-                                            "text": {
-                                                "type": "plain_text",
-                                                "text": "Claim",
-                                                "emoji": true
-                                            },
-                                            "value": "click_me_123"
-                                        }
-                                    ]
+                                        "type": "plain_text",
+                                        "text": "Claim",
+                                        "emoji": true
+                                    },
+                                    "value": "click_me_123"
                                 }
                             ]
-                        })
-                        .then(data => {
-                            console.log(data)
-
-                        })
-                        .catch(err => {
-                            console.error(err)
-                        })
+                        }
+                    ]
                 })
+                .then(data => {
+                    console.log(data)
+
                 })
                 .catch(err => {
-                   console.error(err)
+                    console.error(err)
                 })
-
-            })
-            .catch(err => {
-                console.error(err)
-            })
-           
-
-           
-            
+        })
         .catch(err => {
             console.error(err)
-        })
-           
+         })
+    }) 
+    .catch(err => {
+       console.error(err)
+    })
+  
 })
 
 
