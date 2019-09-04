@@ -2,6 +2,8 @@ const Botkit = require('botkit')
 const axios = require('axios');
 require('dotenv').config()
 
+
+
 if (!process.env.CLIENT_ID || !process.env.CLIENT_SECRET || !process.env.PORT || !process.env.VERIFICATION_TOKEN) {
     console.log('Error: Specify CLIENT_ID, CLIENT_SECRET, VERIFICATION_TOKEN and PORT in environment');
     process.exit(1);
@@ -21,7 +23,7 @@ controller.configureSlackApp({
     clientId: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
     clientSigningSecret: process.env.CLIENT_SIGNING_SECRET,
-    scopes: ['admin','commands', 'bot'],
+    scopes: ['admin','commands', 'bot','channels:history', 'channels:read','emoji:read', 'users.profile:read'],
 })
 
 // instantiate bot user
@@ -100,25 +102,39 @@ controller.middleware.receive.use(function validateDialog(bot, message, next) {
   
   });
 
+
+
+
+    /* 
+
+        TUTOR BOT!!!
+
+        ACTIVAAAAAATE!!!!
+
+
+    */
+
 controller.on('dialog_submission', (bot, message) => {
     bot.replyAcknowledge()
 
-    let WEBHOOK_URL;
+    // let WEBHOOK_URL;
 
-    // use selectfield to choose webhook for specific channel
-    switch(message.submission.select){
-        case 'splurty':
-            WEBHOOK_URL = process.env.SPLURTY_WEBHOOK
-            break;
-        case 'nomster':
-            WEBHOOK_URL = process.env.NOMSTER_WEBHOOK
-            break;
-        default:
-            WEBHOOK_URL=process.env.DEFAULT_WEBHOOK
-    }
-    
-    axios.post(WEBHOOK_URL, {
-            // text: message.submission.textarea,
+    // // use selectfield to choose webhook for specific channel
+    // switch(message.submission.select){
+    //     case 'splurty':
+    //         WEBHOOK_URL = process.env.SPLURTY_WEBHOOK
+    //         break;
+    //     case 'nomster':
+    //         WEBHOOK_URL = process.env.NOMSTER_WEBHOOK
+    //         break;
+    //     default:
+    //         WEBHOOK_URL=process.env.DEFAULT_WEBHOOK
+    // }
+
+
+    // post issue in dev temp channel
+    axios.post(process.env.DEFAULT_WEBHOOK, {
+            text: message.submission.textarea,
             attachments:[
                 {
                     "fallback": "Required plain-text summary of the attachment.",
@@ -141,15 +157,82 @@ controller.on('dialog_submission', (bot, message) => {
                     // "thumb_url": "http://example.com/path/to/thumb.png",
                     "footer": "made with <3 by misterfoxy",
                     "footer_icon": "https://platform.slack-edge.com/img/default_application_icon.png",
-                    "ts": 123456789
+                    "ts": Date.UTC()
                 }
             ]
         })
         .then(data => {
-            bot.reply(message, 'ok!')
-        })
+            /* 
+            
+            after posting data to dev temp channel
+            we want to retrieve the most recent post in the dev temp channel
+        
+
+            */
+        
+            axios.get(`https://slack.com/api/conversations.history?token=${process.env.OAUTH_ACCESS_TOKEN}&channel=${process.env.DEV_TEMP_CHANNEL_ID}`)
+            .then(data => {
+                           /* 
+            
+                            use ts of top result to retrieve specific message
+
+                           */
+            
+                const message_id = data.data.messages[0].ts
+                axios.get(`https://slack.com/api/chat.getPermalink?token=${process.env.OAUTH_ACCESS_TOKEN}&channel=${process.env.DEV_TEMP_CHANNEL_ID}&message_ts=${message_id}`)
+                .then(data => {
+                    // post to TA queue with permalink
+                        axios.post(process.env.TA_QUEUE_WEBHOOK, {
+                            blocks:[
+                                {
+                                    "type": "section",
+                                    "text": {
+                                        "text": data.data.permalink,
+                                        "type": "mrkdwn"
+                                    }
+                                },
+                                {
+                                    "type": "actions",
+                                    "elements": [
+                                        
+                                        {
+                                            "type": "button",
+                                            "text": {
+                                                "type": "plain_text",
+                                                "text": "Claim",
+                                                "emoji": true
+                                            },
+                                            "value": "click_me_123"
+                                        }
+                                    ]
+                                }
+                            ]
+                        })
+                        .then(data => {
+                            console.log(data)
+
+                        })
+                        .catch(err => {
+                            console.error(err)
+                        })
+                })
+                })
+                .catch(err => {
+                   console.error(err)
+                })
+
+            })
+            .catch(err => {
+                console.error(err)
+            })
+           
+
+           
+            
         .catch(err => {
             console.error(err)
         })
            
 })
+
+

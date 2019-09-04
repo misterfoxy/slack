@@ -6,7 +6,7 @@
 -  user fills out following data points:
     - lesson category 
     - lesson number
-    -  github url
+    - github url
     - issue description
 - bot posts issue in the relevant channel based on category dropdown
 - bot posts duplicate message in private channel for data mining
@@ -17,5 +17,8 @@ Create a new Slackbot for a workspace you own
 Capture all environment variables from the settings
 
 Serve your app through ngrok for dev callback URIs
+ - Update Interactive Components Request URL
+ - Update Slash Command URL
+ - Update OAuth Redirect URLs
 
 
