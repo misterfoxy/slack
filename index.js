@@ -129,37 +129,12 @@ controller.on('dialog_submission', (bot, message) => {
     }
 
 
-    axios.post(`https://slack.com/api/chat.postMessage?token=${process.env.BOT_TOKEN}&channel=${CHANNEL_ID}&text=${message.submission.textarea}`,{
-       
-        // attachments:[
-        //     {
-        //         "fallback": "Required plain-text summary of the attachment.",
-        //         "color": "#2eb886",
-        //         // "pretext": "Optional text that appears above the attachment block",
-        //         "author_name": "GitHub URL",
-        //         "fields": [
-        //             {
-        //             "title": "Lesson Number",
-        //             "value": message.submission.num,
-        //             "short": true,
-        //             }
-        //         ],
-        //         "author_link": "https://" + message.submission.url,
-        //         "author_icon": "http://flickr.com/icons/bobby.jpg",
-        //         "title": message.submission.textarea,
-        //         // "title_link": "https://api.slack.com/",
-        //         "text": message.submission.url,
-        //         // "image_url": "http://my-website.com/path/to/image.jpg",
-        //         // "thumb_url": "http://example.com/path/to/thumb.png",
-        //         "footer": "made with <3 by misterfoxy",
-        //         "footer_icon": "https://platform.slack-edge.com/img/default_application_icon.png",
-        //         "ts": Date.UTC()
-        //     }
-        // ]
+    axios.post(`https://slack.com/api/chat.postMessage?token=${process.env.BOT_TOKEN}&channel=${CHANNEL_ID}&text=${message.submission.textarea}&icon_emoji=:apple:`,{
     })
     .then(data => {
         const message_id = data.data.ts
         const channel = data.data.channel
+
 
         // grab permalink of the post
         axios.get(`https://slack.com/api/chat.getPermalink?token=${process.env.OAUTH_ACCESS_TOKEN}&channel=${channel}&message_ts=${message_id}`)
@@ -171,7 +146,7 @@ controller.on('dialog_submission', (bot, message) => {
                         {
                             "type": "section",
                             "text": {
-                                "text": data.data.permalink,
+                                "text": `<${data.data.permalink}|New Issue!>\n :bulb:`,
                                 "type": "mrkdwn"
                             }
                         },
@@ -193,6 +168,7 @@ controller.on('dialog_submission', (bot, message) => {
                     ]
                 })
                 .then(data => {
+                    
                     console.log(data)
 
                 })
