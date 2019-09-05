@@ -61,7 +61,7 @@ controller.on('slash_command', (bot, message) => {
         'Create new Issue',
         'issue',
         'Submit'
-      ).addSelect('What section are you working on?','select',null,[{label:'splurty',value:'splurty'},{label:'nomster',value:'nomster'},{label:'flixter',value:'flixter'},{label:'tdd',value:'tdd'},{label:'spa',value:'spa'}],{placeholder: 'Select One'})
+      ).addText('What section are you working on?','text')
        .addText('What lesson number are you on?', 'num')
        .addTextarea('Issue Description','textarea')
        .addUrl('Github URL','url');
@@ -82,16 +82,23 @@ controller.middleware.receive.use(function validateDialog(bot, message, next) {
             });            
         return;
       }
-      else if(message.submission.select == null) {
+      else if(message.submission.num == null) {
         bot.dialogError({
-           "name":"select",
-           "error":"You must tell us the project you're working on"
+           "name":"num",
+           "error":"You must tell us the lesson number you're working on"
+           });            
+       return;
+     }
+      else if(message.submission.text == null) {
+        bot.dialogError({
+           "name":"text",
+           "error":"You must tell us the lesson you're working on"
            });            
        return;
      }
      else if(message.submission.textarea == null) {
         bot.dialogError({
-           "name":"select",
+           "name":"textarea",
            "error":"You provide a description"
            });            
        return;
@@ -104,32 +111,14 @@ controller.middleware.receive.use(function validateDialog(bot, message, next) {
 
     /* 
 
-        TUTOR BOT!!!
-
-        ACTIVAAAAAATE!!!!
-
+        Do the thing
 
     */
 
 controller.on('dialog_submission', (bot, message) => {
     bot.replyAcknowledge()
 
-    let CHANNEL_ID;
-
-    // use selectfield to choose webhook for specific channel
-    switch(message.submission.select){
-        case 'splurty':
-            CHANNEL_ID = process.env.SPLURTY_ID
-            break;
-        case 'nomster':
-            CHANNEL_ID = process.env.NOMSTER_ID
-            break;
-        default:
-            CHANNEL_ID=process.env.DEV_TEMP_CHANNEL_ID
-    }
-
-
-    axios.post(`https://slack.com/api/chat.postMessage?token=${process.env.BOT_TOKEN}&channel=${CHANNEL_ID}&text=${message.submission.textarea}&icon_emoji=:apple:`,{
+    axios.post(`https://slack.com/api/chat.postMessage?token=${process.env.BOT_TOKEN}&channel=${process.env.REMOTE_SUPPORT_ID}&text=${message.submission.textarea}&icon_emoji=:apple:`,{
     })
     .then(data => {
         const message_id = data.data.ts
